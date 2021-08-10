@@ -1,7 +1,7 @@
-import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom'
-import NavBar from "./components/navBar/NavBar"
-import Article from "./components/articles/Article"
-import './App.css';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
+import NavBar from './components/navBar/NavBar'
+import Article from './components/articles/Article'
+import './App.css'
 
 function App() {
   return (
@@ -10,13 +10,12 @@ function App() {
         <Switch>
           <div>
             <NavBar />
-            <Route path="/" exact component={Article} />
+            <Route path='/' exact component={Article} />
           </div>
-
         </Switch>
       </Router>
     </>
-  );
+  )
 }
 
-export default App;
+export default App
