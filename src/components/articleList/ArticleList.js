@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Card, CardActionArea, CardContent, CardMedia, Typography, Button, CardActions } from '@material-ui/core';
+import { Card, CardActionArea, CardContent, CardMedia, Typography, Button, CardActions, useTheme, useMediaQuery } from '@material-ui/core';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 import EditIcon from '@material-ui/icons/Edit';
 import axios from 'axios'
+import ReactPaginate from "react-paginate";
 import Toast from "../../components/Toast";
 import toastMessage from "../../constants/toastType";
 import API from '../../constants/api'
+import "./articleList.css"
 
 const useStyles = makeStyles({
     root: {
@@ -27,19 +29,17 @@ const useStyles = makeStyles({
 
 });
 
-export default function ArticleList() {
-    const classes = useStyles();
-    const [articles, setArticles] = useState([])
-    let fetchArticles = async () => {
-        const response = await axios.get(API.BASE_URL + "/article/getAllArticle",)
-            .catch(err => {
-                console.log("Err", err)
-            })
+export default function ArticleList(data) {
 
-        let data = response.data.articleObj;
-        console.log(data)
-        setArticles(data)
-    }
+    let articles = data.data
+    console.log("<<<<<<<<<<, data", data,)
+    const classes = useStyles();
+
+    const [pArticles, setPArticles] = useState(articles.slice(0, 4))
+
+    const [pageNumber, setPageNumber] = useState(0);
+    const usersPerPage = 2;
+    const pagesVisited = pageNumber * usersPerPage;
 
     const deleteArticle = async (id) => {
         if (!window.confirm("Are You Sure To Delete?")) return;
@@ -50,63 +50,80 @@ export default function ArticleList() {
                 toastMessage.error(message)
             })
 
-        fetchArticles()
+        // fetchArticles()
+        let newArticles = pArticles.filter((a) => a.id !== id)
+        setPArticles(newArticles)
         toastMessage.success(response.data.message)
-
-
     }
+    const displayArticles = pArticles
+        .slice(pagesVisited, pagesVisited + usersPerPage)
+        .map((ar) => {
+            let imgUrl = `${API.BASE_URL}/static/${ar.image}`
+            return (
+                <Card className={classes.root} key={ar.id}>
+                    <CardActionArea className={classes.cardArea}>
+                        <CardMedia
+                            className={classes.cmedia}
+                            component="img"
+                            alt="Image"
+                            height="140"
+                            width="0"
+                            image={imgUrl}
+                            title={ar.sportName.toUpperCase()}
+                        />
+                        <CardContent className={classes.ccontent}>
+                            <Typography gutterBottom variant="h5" component="h2">
+                                <b> {ar.sportName.toUpperCase()}</b>
+                            </Typography>
+                            <Typography gutterBottom variant="h5" component="h2">
+                                <b> {ar.article}</b>
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary" component="p">
+                                {ar.content}
+                            </Typography>
+                            <Typography gutterBottom variant="h5" component="h5">
+                                <i> {ar.author} </i>
+                            </Typography>
+                        </CardContent>
+                    </CardActionArea>
+                    <CardActions>
+                        <Button size="small" onClick={() => deleteArticle(ar.id)}>
+                            <DeleteForeverIcon color="action" />
+                        </Button>
+                        <Button size="small" color="primary">
+                            <EditIcon color="action" />
+                        </Button>
+                    </CardActions>
 
-    useEffect(() => {
-        fetchArticles()
-    }, []);
+                </Card>
+            );
+        });
+
+    const pageCount = Math.ceil(pArticles.length / usersPerPage);
+
+    const changePage = ({ selected }) => {
+        setPageNumber(selected);
+    };
+
+
 
     return (
-        <div>
-            {
-                articles.map(ar => {
-                    let imgUrl = `${API.BASE_URL}/static/${ar.image}`
-                    return (
-                        <Card className={classes.root}>
-                            <CardActionArea className={classes.cardArea}>
-                                <CardMedia
-                                    className={classes.cmedia}
-                                    component="img"
-                                    alt="Image"
-                                    height="140"
-                                    width="0"
-                                    image={imgUrl}
-                                    title={ar.sportName.toUpperCase()}
-                                />
-                                <CardContent className={classes.ccontent}>
-                                    <Typography gutterBottom variant="h5" component="h2">
-                                        <b> {ar.sportName.toUpperCase()}</b>
-                                    </Typography>
-                                    <Typography gutterBottom variant="h5" component="h2">
-                                        <b> {ar.article}</b>
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary" component="p">
-                                        {ar.content}
-                                    </Typography>
-                                    <Typography gutterBottom variant="h5" component="h5">
-                                        <i> {ar.author} </i>
-                                    </Typography>
-                                </CardContent>
-                            </CardActionArea>
-                            <CardActions>
-                                <Button size="small" onClick={() => deleteArticle(ar.id)}>
-                                    <DeleteForeverIcon color="action" />
-                                </Button>
-                                <Button size="small" color="primary">
-                                    <EditIcon color="action" />
-                                </Button>
-                            </CardActions>
-
-                        </Card>
-
-                    )
-                })
-            }
+        <>
+            <div className="">
+                {displayArticles}
+                <ReactPaginate
+                    previousLabel={"Previous"}
+                    nextLabel={"Next"}
+                    pageCount={pageCount}
+                    onPageChange={changePage}
+                    containerClassName={"paginationBttns"}
+                    previousLinkClassName={"previousBttn"}
+                    nextLinkClassName={"nextBttn"}
+                    disabledClassName={"paginationDisabled"}
+                    activeClassName={"paginationActive"}
+                />
+            </div>
             <Toast />
-        </div >
+        </>
     );
 }
